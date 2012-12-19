@@ -1,0 +1,78 @@
+// Ok so we need to make quite a few assumptions here about generateUrl. I don't imagine it's on the server side as 'hey - it's JS!' and the json object appears to be the sort of thing a server would return when responding to an image search query as per the earlier questions so that means it's probably executing on the client side in a browser window.
+
+// If I were to guess, I'd say that this function would therefore be called when the page was rendering in order to create a link to different sizes of each of the images displayed. kind of like this:
+
+// [ IMAGE ]    "link to image size xx by xx", "link to image size yy by yy"
+
+generateUrl(appendixA1, imageId, sizeId) {
+    
+    // So first of all we have the interesting fact that appendixA1 is both the name of the first argument and the first argument in the test input specified by the question. I pretty much have to answer the question put to me but I imagine the intention was to have the first argument be something like 'appendixObject' or 'appendix' and to have appendixA1 be the first argument of the sample call. Of course the sample doesn't indicate what appendixA1 actually is, and without quotation marks it's not clearly a literal. I'm therefore going to assume it's either string equal to "appendixA1" which would have some magic effect on the domain part of the returned URL if I knew more about the context or - more likely- it's the jsonObject we've been referring to in previous questions. 
+
+    // I'm going to assume the latter - that this function has access to the json object by having it passed to it as 'appendixA1' - if that's not the case then I'd have to assume that the function is called by an object which has the json object as one of its properties and we'd just throw in a bunch of 'this.'
+
+
+    // breaking down the URL we can see it's made of roughly ImageID + SizeID + Height + Width
+    // “http://localhost/Image_13_5_450_610.jpg”
+
+    // Well, there's no indication as to how we come to http://localhost so I'm going to just type it out, it'd be easy to make this part dynamic by just returning a string based on some other information.
+
+
+    var url = "http://localhost/Image_";
+
+    // so  let's use the image ID to get the image object. 
+
+    // It's a little odd to reconcile the idea that we now have to search for the damn image object in the images array as this function would more likely be called during a for loop for displaying each of the image objects - it'd be easier to pass this information when the function is called and would save some enumerating. 
+     
+
+    var height = "0";
+    var width = "0";
+
+    var i = 0;
+    for (i = 0; i < appendixA1.images.length; i++ ) {
+	if (appendixA1.images[i].id == imageId) {
+
+	    // Oh and apparently we're using arbitrary properties for the sizes instead of an array!
+	    // bracket notation, you are my only friend.
+
+	    height = appendixA1.images[i].sizes[sizeId].height;
+	    width = appendixA1.images[i].sizes[sizeId].width;
+
+	    break;
+	}
+    }
+
+    var returnText = url.concat(imageID, "_", sizeId, "_", height, "_", width, ".jpg");
+
+    return returnText;
+
+
+ 
+}
+
+// for each of the images in the appendix 
+
+$.getJSON("whatevs/images/tastyjsonthing", function(data) {
+    
+    $.each(data.images, function() {
+	// get imgID
+	var imageID = this.id;
+
+	// get size ID
+	var objkeys = [];
+	for (var key in this.sizes) {
+	    objkeys.push(key);
+	}
+
+	// generate URLs for each of the possible sizes using generateUrl()
+	$.each(objkeys, function(index, value) {
+	    var url = generateUrl(data, imageID, value);
+	    
+	    // and then add the images to the page
+	    $("#imagelist ul").append('"<li class="dynimage"><img src="' + url + '"/></li>');
+	});
+	
+	
+    });
+});
+
+// Then prettify in CSS.
